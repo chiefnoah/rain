@@ -123,6 +123,14 @@ func main() {
 					Usage: "URL of RPC server",
 					Value: "http://127.0.0.1:" + strconv.Itoa(torrent.DefaultConfig.RPCPort),
 				},
+				cli.StringFlag{
+					Name:  "username,u",
+					Usage: "username for authenticating if the sever is prected with HTTP Basic auth",
+				},
+				cli.StringFlag{
+					Name:  "password,p",
+					Usage: "password for authenticating if the server is protected with HTP Basic auth",
+				},
 			},
 			Before: handleBeforeClient,
 			Subcommands: []cli.Command{
@@ -647,7 +655,11 @@ func handleDownload(c *cli.Context) error {
 }
 
 func handleBeforeClient(c *cli.Context) error {
-	clt = rainrpc.NewClient(c.String("url"))
+	if c.String("username") != "" {
+		clt = rainrpc.NewAuthenticatedClient(c.String("url"), c.String("username"), c.String("password"))
+	} else {
+		clt = rainrpc.NewClient(c.String("url"))
+	}
 	return nil
 }
 

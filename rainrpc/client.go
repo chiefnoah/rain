@@ -5,10 +5,19 @@ import (
 	"encoding/base64"
 	"io"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/cenkalti/rain/internal/rpctypes"
 	"github.com/powerman/rpc-codec/jsonrpc2"
 )
+
+type HTTPClient struct {
+	username, password string
+}
+
+func (*HTTPClient) Do(req *http.Request) (*http.Response, error) {
+	return nil, nil
+}
 
 // Client is a JSON-RPC 2.0 client for calling methods of a remote Session.
 type Client struct {
@@ -20,6 +29,17 @@ type Client struct {
 func NewClient(addr string) *Client {
 	return &Client{
 		client: jsonrpc2.NewHTTPClient(addr),
+		addr:   addr,
+	}
+}
+
+func NewAuthenticatedClient(addr, username, password string) *Client {
+	a := func(req *http.Request) (*http.Response, error) {
+		req.SetBasicAuth(username, password)
+		return http.DefaultTransport.RoundTrip(req)
+	}
+	return &Client{
+		client: jsonrpc2.NewCustomHTTPClient(addr, jsonrpc2.DoerFunc(a)),
 		addr:   addr,
 	}
 }
